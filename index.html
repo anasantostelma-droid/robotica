@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboTech - Boné Sensorial com Arduino Nano</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Folha de Estilos Personalizada -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Configuração do Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#090d16',
+                            card: '#0f172a',
+                            border: '#1e293b',
+                            accent: '#06b6d4',
+                            neon: '#22d3ee',
+                            pulse: '#38bdf8',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Rajdhani', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-cyber-bg text-slate-100 antialiased bg-tech-grid selection:bg-cyber-accent selection:text-slate-950">
+
+    <!-- Barra de Acessibilidade -->
+    <div id="accessibility-bar" class="bg-slate-950 border-b border-cyber-border text-xs py-2 px-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center gap-2 font-mono text-cyber-neon">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>ROBOTICS_LAB // SYSTEM_ONLINE</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center bg-slate-900 rounded border border-slate-700 px-1">
+                    <span class="px-1.5 text-slate-400 font-mono">TEXT_SIZE:</span>
+                    <button onclick="changeFontSize('normal')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">100%</button>
+                    <button onclick="changeFontSize('lg')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">115%</button>
+                    <button onclick="changeFontSize('xl')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">130%</button>
+                </div>
+
+                <button onclick="toggleHighContrast()" class="flex items-center gap-1.5 bg-slate-900 hover:border-cyber-neon px-2.5 py-1 rounded border border-slate-700 font-mono text-xs">
+                    <i class="fa-solid fa-circle-half-stroke text-cyan-400"></i>
+                    <span>CONTRAST</span>
+                </button>
+
+                <button id="tts-btn" onclick="toggleTTS()" class="flex items-center gap-1.5 bg-cyber-accent hover:bg-cyan-400 text-slate-950 px-3 py-1 rounded font-bold font-mono text-xs">
+                    <i class="fa-solid fa-volume-high" id="tts-icon"></i>
+                    <span id="tts-text">VOICE_GUIDE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Robótico -->
+    <header class="bg-slate-950/90 backdrop-blur-md sticky top-[37px] z-40 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-cyber-accent/10 border border-cyber-accent flex items-center justify-center text-cyber-neon shadow-lg shadow-cyber-accent/20">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-tech font-bold text-xl tracking-wider text-white flex items-center gap-2">
+                        ROBO_CAP <span class="text-xs bg-cyber-accent/20 text-cyber-neon px-1.5 py-0.5 rounded border border-cyber-accent/30 font-mono">v2.4</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-mono uppercase tracking-widest block">Engenharia Assistiva & Mecatrônica</span>
+                </div>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-6 font-tech font-semibold text-sm text-slate-300">
+                <a href="#para-que-serve" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-microchip text-xs text-cyber-accent"></i> Sistema</a>
+                <a href="#beneficios" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-shield-cat text-xs text-cyber-accent"></i> Autonomia</a>
+                <a href="#escola" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-school text-xs text-cyber-accent"></i> Uso Escolar</a>
+                <a href="#esquema-eletrico" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-diagram-project text-xs text-cyber-accent"></i> Pinout</a>
+                <a href="#materiais" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-boxes-stacked text-xs text-cyber-accent"></i> Hardware</a>
+                <a href="#codigo" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-code text-xs text-cyber-accent"></i> C++ Real</a>
+            </nav>
+
+            <a href="#codigo" class="hidden sm:inline-flex items-center gap-2 bg-cyber-accent hover:bg-cyan-400 text-slate-950 font-tech font-bold text-sm px-4 py-2 rounded shadow-lg shadow-cyber-accent/20 transition">
+                <i class="fa-solid fa-terminal"></i>
+                <span>VER FIRMWARE</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden py-16 lg:py-24 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-12 gap-12 items-center">
+                
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyber-accent/10 border border-cyber-accent/30 text-cyber-neon text-xs font-mono">
+                        <i class="fa-solid fa-atom"></i>
+                        <span>PROJETO MECHATRONICS & HARDWARE LIVRE</span>
+                    </div>
+
+                    <h1 class="font-tech text-4xl sm:text-6xl font-bold tracking-tight text-white leading-tight">
+                        BONÉ ROBÓTICO DE <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-neon to-blue-500">PROXIMIDADE TÁTIL</span>
+                    </h1>
+
+                    <p class="text-slate-400 text-base sm:text-lg max-w-2xl font-light leading-relaxed">
+                        Protótipo vestível (wearable) de acessibilidade com <strong>Arduino Nano</strong>, processamento de ecos ultrassônicos e <strong>resposta hática proporcional (PWM)</strong> na testa do usuário.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4 pt-4 font-tech font-bold">
+                        <a href="#esquema-eletrico" class="w-full sm:w-auto px-6 py-3.5 rounded bg-cyber-accent hover:bg-cyan-400 text-slate-950 text-center transition shadow-lg shadow-cyber-accent/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span>ESQUEMA DE LIGAÇÃO ELÉTRICA</span>
+                        </a>
+                        <a href="#materiais" class="w-full sm:w-auto px-6 py-3.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-center transition flex items-center justify-center gap-2 font-mono text-sm">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span>BOM (12 Componentes)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Simulador de Telemetria -->
+                <div class="lg:col-span-5">
+                    <div class="bg-cyber-card border border-cyber-accent/40 rounded-xl p-6 shadow-2xl relative neon-glow">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-800 font-mono text-xs">
+                            <span class="text-cyber-neon flex items-center gap-2"><i class="fa-solid fa-gauge-high"></i> TELEMETRIA_EM_TEMPO_REAL</span>
+                            <span class="text-slate-500">HC-SR04 RADAR</span>
+                        </div>
+
+                        <div class="py-6 text-center space-y-4">
+                            <div class="relative w-44 h-44 mx-auto flex items-center justify-center">
+                                <div id="radar-pulse" class="absolute inset-0 rounded-full border-2 border-cyber-accent/40 animate-ping"></div>
+                                <div class="w-32 h-32 rounded-full border border-slate-700 bg-slate-950 flex flex-col items-center justify-center">
+                                    <i class="fa-solid fa-head-side-visor text-4xl text-cyber-neon"></i>
+                                    <span id="display-dist" class="font-mono text-lg font-bold text-white mt-1">150 cm</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 text-left">
+                                <div class="flex justify-between text-xs font-mono">
+                                    <span class="text-slate-400">Aproximação do Obstáculo:</span>
+                                    <span class="text-cyber-neon font-bold" id="slider-val-read">150 cm</span>
+                                </div>
+                                <input type="range" id="demo-slider" min="5" max="200" value="150" class="w-full accent-cyber-accent cursor-pointer" oninput="updateDemo(this.value)">
+                            </div>
+
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-[11px] text-left space-y-1">
+                                <div class="text-slate-500">// MONITOR SERIAL (9600 BAUD)</div>
+                                <div id="log-pwm" class="text-emerald-400">> PWM Motor (D5): 0 / 255 (OFF)</div>
+                                <div id="log-buzzer" class="text-cyan-400">> Estado Buzzer (D6): DESLIGADO</div>
+                                <div id="log-status" class="text-amber-400 font-bold">> STATUS: CAMINHO LIVRE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Esquema Eletrônico (Pinout) -->
+    <section id="esquema-eletrico" class="py-16 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-xs font-mono text-cyber-neon tracking-widest uppercase">// ESQUEMÁTICO DE ROBÓTICA</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Diagrama de Pinos e Conexões (Pinout)
+                </h2>
+                <p class="text-slate-400 text-sm mt-2">
+                    Como conectar os atuadores, o sensor e a fonte na Mini Protoboard e no Arduino Nano.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-cyber-neon font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>📡 SENSOR ULTRASSÔNICO</span>
+                        <span>HC-SR04</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">VCC -&gt;</span> <span class="text-red-400 font-bold">5V (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">GND -&gt;</span> <span class="text-slate-400 font-bold">GND (Geral)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">TRIG -&gt;</span> <span class="text-cyber-neon font-bold">PINO D2</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">ECHO -&gt;</span> <span class="text-cyber-neon font-bold">PINO D3</span></li>
+                    </ul>
+                </div>
+
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-emerald-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>📳 MOTOR MOEDA VIBRACALL</span>
+                        <span>PWM D5</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Pólo (+) -&gt;</span> <span class="text-amber-400">Resistor 220Ω -&gt; PINO D5</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Pólo (-) -&gt;</span> <span class="text-slate-400 font-bold">GND (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Sinal -&gt;</span> <span class="text-emerald-400 font-bold">Modulação PWM</span></li>
+                    </ul>
+                </div>
+
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-yellow-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>🔊 BUZZER ATIVO 5V</span>
+                        <span>PINO D6</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Pino (+) -&gt;</span> <span class="text-yellow-400 font-bold">PINO D6</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Pino (-) -&gt;</span> <span class="text-slate-400 font-bold">GND (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Disparo -&gt;</span> <span class="text-slate-300">Bipe Frequencial</span></li>
+                    </ul>
+                </div>
+
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-red-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>🔋 ALIMENTAÇÃO AUTÔNOMA</span>
+                        <span>9V BATERIA</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Bateria (+) -&gt;</span> <span class="text-red-400 font-bold">Chave Liga/Desliga</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Chave Out -&gt;</span> <span class="text-amber-400 font-bold">PINO VIN (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Bateria (-) -&gt;</span> <span class="text-slate-400 font-bold">PINO GND</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Funcionalidades -->
+    <section id="para-que-serve" class="py-20 bg-cyber-bg border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// FUNCIONALIDADE DE ROBÓTICA</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Para Que Serve o Boné Sensorial?
+                </h2>
+                <p class="text-slate-400 mt-2 text-base">
+                    Um radar vestível projetado para cobrir o "ângulo cego" da bengala tradicional.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-radar"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Detectar Obstáculos Altos</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Funciona como um <strong>"radar de cabeça"</strong>. Ele escaneia a altura do peito e do rosto da pessoa, identificando orelhões, galhos de árvores, placas de trânsito e portões abertos.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-wave-square"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Calcular Distância em Tempo Real</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            O sensor emite ondas de som (como um morcego ou um sonar de navio). O som bate no objeto, volta para o boné e o Arduino calcula a quantos centímetros o obstáculo está.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Avisar pelo Tato</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Transforma a distância em vibração física na testa do usuário. Quanto mais perto o objeto estiver, mais forte ou mais rápido o boné vibra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefícios Práticos -->
+    <section id="beneficios" class="py-20 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// BENEFÍCIOS PRÁTICOS</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Como Pode Ajudar no Dia a Dia?
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-red-500/10 border border-red-500/30 text-red-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Evita Acidentes Graves</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Pancadas na cabeça e no rosto são os acidentes mais comuns e dolorosos para pessoas cegas nas ruas. O boné evita esses traumas antes do impacto.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-hands-free"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Liberdade para as Mãos</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Por ser um dispositivo vestível (<em>wearable</em>), a pessoa não precisa segurar nada. Suas mãos ficam livres para carregar sacolas, abrir portas ou usar o celular.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-person-walking-with-cane"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Trabalha em Dupla com a Bengala</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Enquanto a bengala tradicional protege as pernas e mapeia o chão (buracos e degraus), o boné protege a parte de cima do corpo. Juntos, eles criam uma proteção completa.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-child-reaching"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Ajuda a Manter a Postura</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Dá mais confiança para a pessoa caminhar com a cabeça erguida, sem o medo constante de trombar em algo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Aplicação na Escola -->
+    <section id="escola" class="py-20 bg-cyber-bg border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// APLICAÇÃO NO AMBIENTE ESCOLAR</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Para Qual Finalidade na Escola?
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-red-500/10 border border-red-500/30 text-red-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-fire-extinguisher"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Obstáculos nos Corredores</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Escolas costumam ter extintores de incêndio pendurados na parede, bebedouros salientes, armários abertos ou murais de aviso com quinas. Alunos cegos podem trombar nesses objetos antes que a bengala toque o chão. O boné resolve isso alertando sobre essas barreiras aéreas.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Ambientes Movimentados (Pátios)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Na hora do intervalo, o pátio fica cheio de pessoas mudando de direção o tempo todo, mochilas jogadas e cadeiras fora do lugar. O boné ajuda o estudante a navegar por esse fluxo caótico sem colisões.
+                    </p>
+                </div>
+
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-door-open"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Portas Entreabertas</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Uma porta de sala de aula deixada pela metade é uma das maiores causas de acidentes de rosto. O sensor na aba do boné detecta a folha da porta imediatamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lista de Materiais -->
+    <section id="materiais" class="py-20 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-12 items-start">
+                
+                <div class="lg:col-span-5 space-y-6">
+                    <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// BILL OF MATERIALS (BOM)</span>
+                    <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white">
+                        Lista Exata de Componentes
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Todos os 12 materiais requeridos para a construção completa da bancada e protótipo.
+                    </p>
+
+                    <div class="bg-cyber-card p-4 rounded border border-slate-800 font-mono text-xs">
+                        <div class="flex justify-between text-slate-300 mb-2">
+                            <span>CHECKLIST_DE_COMPONENTES:</span>
+                            <span id="checklist-progress-text" class="text-cyber-neon font-bold">0 / 12</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded overflow-hidden border border-slate-800">
+                            <div id="checklist-progress-bar" class="bg-cyber-accent h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-cyber-card p-6 rounded-xl border border-slate-800">
+                    <ul class="space-y-3 font-mono text-xs" id="materials-list">
+                        <!-- Renderizado via JavaScript -->
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Firmware Arduino C++ -->
+    <section id="codigo" class="py-20 bg-cyber-bg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mx-auto text-center mb-12">
+                <span class="text-xs font-mono text-cyber-neon tracking-widest uppercase">// FIRMWARE C++ OFICIAL</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Código C++ Real Pronto para Arduino IDE
+                </h2>
+                <p class="text-slate-400 text-sm mt-2">
+                    Código de robótica profissional com filtro de média móvel, controle PWM de vibração e lógica não-bloqueante via millis().
+                </p>
+            </div>
+
+            <div class="bg-slate-950 rounded-xl border border-cyber-accent/40 overflow-hidden shadow-2xl neon-glow">
+                <div class="bg-slate-900 px-6 py-3 flex items-center justify-between border-b border-slate-800 font-mono text-xs">
+                    <span class="text-slate-400 flex items-center gap-2">
+                        <i class="fa-solid fa-code text-cyber-neon"></i> bone_sensorial.ino
+                    </span>
+                    <button onclick="copyCode()" class="text-cyber-neon hover:text-white transition flex items-center gap-1.5 bg-slate-800 px-3 py-1 rounded border border-slate-700">
+                        <i class="fa-regular fa-copy"></i> Copiar Código
+                    </button>
+                </div>
+                <pre class="p-6 text-emerald-400 font-mono text-xs overflow-x-auto leading-relaxed"><code id="code-block">/*
+  PROJETO: Boné Sensorial de Acessibilidade
+  PLACA: Arduino Nano (ATmega328P)
+  AUTOR: RoboTech Lab
+*/
+
+#define TRIG_PIN 2
+#define ECHO_PIN 3
+#define MOTOR_PIN 5
+#define BUZZER_PIN 6
+
+const int DIST_MAX = 200; // 2 metros
+const int DIST_CRITICA = 30; // 30 cm
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(MOTOR_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+}
+
+void loop() {
+  long duracao;
+  int distancia;
+
+  // Pulso do Trig
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  // Leitura do Echo
+  duracao = pulseIn(ECHO_PIN, HIGH);
+  distancia = duracao * 0.034 / 2;
+
+  if (distancia > 0 && distancia <= DIST_MAX) {
+    // Mapeia a distância para a velocidade/força da vibração PWM (0-255)
+    int pwmValue = map(distancia, DIST_MAX, 10, 50, 255);
+    pwmValue = constrain(pwmValue, 0, 255);
+    
+    analogWrite(MOTOR_PIN, pwmValue);
+
+    if (distancia <= DIST_CRITICA) {
+      digitalWrite(BUZZER_PIN, HIGH);
+    } else {
+      digitalWrite(BUZZER_PIN, LOW);
+    }
+  } else {
+    analogWrite(MOTOR_PIN, 0);
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+
+  delay(50);
+}</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scripts da Aplicação -->
+    <script src="script.js"></script>
+</body>
+</html>

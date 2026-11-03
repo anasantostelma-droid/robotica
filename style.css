@@ -1,0 +1,56 @@
+/* Fundo com Grid Técnico de Robótica */
+.bg-tech-grid {
+    background-image: radial-gradient(rgba(34, 211, 238, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+/* Efeito de Borda Neon/Glow */
+.neon-glow {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+}
+
+/* Modo de Alto Contraste */
+body.high-contrast {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+body.high-contrast .bg-card, 
+body.high-contrast section,
+body.high-contrast div {
+    background-color: #050505 !important;
+    color: #ffffff !important;
+    border-color: #00ffff !important;
+}
+
+body.high-contrast a, 
+body.high-contrast button {
+    color: #00ffff !important;
+}
+
+/* Tamanhos de Fonte de Acessibilidade */
+body.font-lg { 
+    font-size: 115%; 
+}
+
+body.font-xl { 
+    font-size: 130%; 
+}
+
+/* Barra de Rolagem Customizada */
+::-webkit-scrollbar { 
+    width: 8px; 
+}
+
+::-webkit-scrollbar-track { 
+    background: #090d16; 
+}
+
+::-webkit-scrollbar-thumb { 
+    background: #06b6d4; 
+    border-radius: 4px; 
+}
+
+::-webkit-scrollbar-thumb:hover { 
+    background: #22d3ee; 
+}
