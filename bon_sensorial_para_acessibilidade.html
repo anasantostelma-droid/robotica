@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll----smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RoboTech - Boné Sensorial com Arduino Nano</title>
+    
+    <!-- Tailwind CSS (Biblioteca para Estilos Rápidos e Responsivos) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- ================================================================= -->
+    <!-- 1. BLOCO DE ESTILOS CSS (ESTILO TECH/ROBÓTICA)                    -->
+    <!-- ================================================================= -->
+    <script>
+        // Configuração personalizada de cores com tema Robótica / Cyber
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#090d16',
+                            card: '#0f172a',
+                            border: '#1e293b',
+                            accent: '#06b6d4',
+                            neon: '#22d3ee',
+                            pulse: '#38bdf8',
+                            warning: '#f59e0b',
+                            danger: '#ef4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Rajdhani', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+            transition: font-size 0.2s ease;
+        }
+
+        /* Fundo com Grid Técnico de Robótica */
+        .bg-tech-grid {
+            background-image: radial-gradient(rgba(34, 211, 238, 0.12) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* Efeito de Borda Neon/Glow */
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.25);
+        }
+
+        /* Modo de Alto Contraste */
+        body.high-contrast {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+        body.high-contrast .bg-card, 
+        body.high-contrast section,
+        body.high-contrast div {
+            background-color: #050505 !important;
+            color: #ffffff !important;
+            border-color: #00ffff !important;
+        }
+        body.high-contrast a, 
+        body.high-contrast button {
+            color: #00ffff !important;
+        }
+        
+        body.font-lg { font-size: 115%; }
+        body.font-xl { font-size: 130%; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #06b6d4; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+    </style>
+</head>
+
+<body class="bg-cyber-bg text-slate-100 antialiased bg-tech-grid selection:bg-cyber-accent selection:text-slate-950">
+
+    <!-- Barra de Acessibilidade & Status de Controle -->
+    <div id="accessibility-bar" class="bg-slate-950 border-b border-cyber-border text-xs py-2 px-4 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center gap-2 font-mono text-cyber-neon">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>ROBOTICS_LAB // SYSTEM_ONLINE</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center bg-slate-900 rounded border border-slate-700 px-1">
+                    <span class="px-1.5 text-slate-400 font-mono">TEXT_SIZE:</span>
+                    <button onclick="changeFontSize('normal')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">100%</button>
+                    <button onclick="changeFontSize('lg')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">115%</button>
+                    <button onclick="changeFontSize('xl')" class="px-2 py-0.5 hover:text-cyber-neon font-mono text-xs">130%</button>
+                </div>
+
+                <button onclick="toggleHighContrast()" class="flex items-center gap-1.5 bg-slate-900 hover:border-cyber-neon px-2.5 py-1 rounded border border-slate-700 font-mono text-xs">
+                    <i class="fa-solid fa-circle-half-stroke text-cyan-400"></i>
+                    <span>CONTRAST</span>
+                </button>
+
+                <button id="tts-btn" onclick="toggleTTS()" class="flex items-center gap-1.5 bg-cyber-accent hover:bg-cyan-400 text-slate-950 px-3 py-1 rounded font-bold font-mono text-xs">
+                    <i class="fa-solid fa-volume-high" id="tts-icon"></i>
+                    <span id="tts-text">VOICE_GUIDE</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Robótico -->
+    <header class="bg-slate-950/90 backdrop-blur-md sticky top-[37px] z-40 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <a href="#" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-cyber-accent/10 border border-cyber-accent flex items-center justify-center text-cyber-neon shadow-lg shadow-cyber-accent/20">
+                    <i class="fa-solid fa-robot text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-tech font-bold text-xl tracking-wider text-white flex items-center gap-2">
+                        ROBO_CAP <span class="text-xs bg-cyber-accent/20 text-cyber-neon px-1.5 py-0.5 rounded border border-cyber-accent/30 font-mono">v2.4</span>
+                    </span>
+                    <span class="text-[10px] text-slate-400 font-mono uppercase tracking-widest block">Engenharia Assistiva & Mecatrônica</span>
+                </div>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-6 font-tech font-semibold text-sm text-slate-300">
+                <a href="#para-que-serve" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-microchip text-xs text-cyber-accent"></i> Sistema</a>
+                <a href="#beneficios" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-shield-cat text-xs text-cyber-accent"></i> Autonomia</a>
+                <a href="#escola" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-school text-xs text-cyber-accent"></i> Uso Escolar</a>
+                <a href="#esquema-eletrico" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-diagram-project text-xs text-cyber-accent"></i> Pinout</a>
+                <a href="#materiais" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-boxes-stacked text-xs text-cyber-accent"></i> Hardware</a>
+                <a href="#codigo" class="hover:text-cyber-neon transition flex items-center gap-1.5"><i class="fa-solid fa-code text-xs text-cyber-accent"></i> C++ Real</a>
+            </nav>
+
+            <a href="#codigo" class="hidden sm:inline-flex items-center gap-2 bg-cyber-accent hover:bg-cyan-400 text-slate-950 font-tech font-bold text-sm px-4 py-2 rounded shadow-lg shadow-cyber-accent/20 transition">
+                <i class="fa-solid fa-terminal"></i>
+                <span>VER FIRMWARE</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Hero Section: Bancada de Testes de Robótica -->
+    <section class="relative overflow-hidden py-16 lg:py-24 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-12 gap-12 items-center">
+                
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-cyber-accent/10 border border-cyber-accent/30 text-cyber-neon text-xs font-mono">
+                        <i class="fa-solid fa-atom"></i>
+                        <span>PROJETO MECHATRONICS & HARDWARE LIVRE</span>
+                    </div>
+
+                    <h1 class="font-tech text-4xl sm:text-6xl font-bold tracking-tight text-white leading-tight">
+                        BONÉ ROBÓTICO DE <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-neon to-blue-500">PROXIMIDADE TÁTIL</span>
+                    </h1>
+
+                    <p class="text-slate-400 text-base sm:text-lg max-w-2xl font-light leading-relaxed">
+                        Protótipo vestível (wearable) de acessibilidade com **Arduino Nano**, processamento de ecos ultrassônicos e **resposta hática proporcional (PWM)** na testa do usuário.
+                    </p>
+
+                    <div class="flex flex-col sm:flex-row items-center gap-4 pt-4 font-tech font-bold">
+                        <a href="#esquema-eletrico" class="w-full sm:w-auto px-6 py-3.5 rounded bg-cyber-accent hover:bg-cyan-400 text-slate-950 text-center transition shadow-lg shadow-cyber-accent/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-network-wired"></i>
+                            <span>ESQUEMA DE LIGAÇÃO ELÉTRICA</span>
+                        </a>
+                        <a href="#materiais" class="w-full sm:w-auto px-6 py-3.5 rounded bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 text-center transition flex items-center justify-center gap-2 font-mono text-sm">
+                            <i class="fa-solid fa-microchip"></i>
+                            <span>BOM (12 Componentes)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Simulador de Telemetria e Bancada de Robótica -->
+                <div class="lg:col-span-5">
+                    <div class="bg-cyber-card border border-cyber-accent/40 rounded-xl p-6 shadow-2xl relative neon-glow">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-800 font-mono text-xs">
+                            <span class="text-cyber-neon flex items-center gap-2"><i class="fa-solid fa-gauge-high"></i> TELEMETRIA_EM_TEMPO_REAL</span>
+                            <span class="text-slate-500">HC-SR04 RADAR</span>
+                        </div>
+
+                        <div class="py-6 text-center space-y-4">
+                            <!-- Display de Radar de Robótica -->
+                            <div class="relative w-44 h-44 mx-auto flex items-center justify-center">
+                                <div id="radar-pulse" class="absolute inset-0 rounded-full border-2 border-cyber-accent/40 animate-ping"></div>
+                                <div class="w-32 h-32 rounded-full border border-slate-700 bg-slate-950 flex flex-col items-center justify-center">
+                                    <i class="fa-solid fa-head-side-visor text-4xl text-cyber-neon"></i>
+                                    <span id="display-dist" class="font-mono text-lg font-bold text-white mt-1">150 cm</span>
+                                </div>
+                            </div>
+
+                            <!-- Controle Slider -->
+                            <div class="space-y-2 text-left">
+                                <div class="flex justify-between text-xs font-mono">
+                                    <span class="text-slate-400">Aproximação do Obstáculo:</span>
+                                    <span class="text-cyber-neon font-bold" id="slider-val-read">150 cm</span>
+                                </div>
+                                <input type="range" id="demo-slider" min="5" max="200" value="150" class="w-full accent-cyber-accent cursor-pointer" oninput="updateDemo(this.value)">
+                            </div>
+
+                            <!-- Console Estilo Terminal Serial -->
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800 font-mono text-[11px] text-left space-y-1">
+                                <div class="text-slate-500">// MONITOR SERIAL (9600 BAUD)</div>
+                                <div id="log-pwm" class="text-emerald-400">> PWM Motor (D5): 0 / 255 (OFF)</div>
+                                <div id="log-buzzer" class="text-cyan-400">> Estado Buzzer (D6): DESLIGADO</div>
+                                <div id="log-status" class="text-amber-400 font-bold">> STATUS: CAMINHO LIVRE</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- NOVO BLOCO ROBÓTICO: Esquema Eletrônico de Ligação (Pinout) -->
+    <section id="esquema-eletrico" class="py-16 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-xs font-mono text-cyber-neon tracking-widest uppercase">// ESQUEMÁTICO DE ROBÓTICA</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Diagrama de Pinos e Conexões (Pinout)
+                </h2>
+                <p class="text-slate-400 text-sm mt-2">
+                    Como conectar os atuadores, o sensor e a fonte na Mini Protoboard e no Arduino Nano.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
+                <!-- Conexão 1 -->
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-cyber-neon font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>📡 SENSOR ULTRASSÔNICO</span>
+                        <span>HC-SR04</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">VCC -></span> <span class="text-red-400 font-bold">5V (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">GND -></span> <span class="text-slate-400 font-bold">GND (Geral)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">TRIG -></span> <span class="text-cyber-neon font-bold">PINO D2</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">ECHO -></span> <span class="text-cyber-neon font-bold">PINO D3</span></li>
+                    </ul>
+                </div>
+
+                <!-- Conexão 2 -->
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-emerald-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>📳 MOTOR MOEDA VIBRACALL</span>
+                        <span>PWM D5</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Pólo (+) -></span> <span class="text-amber-400">Resistor 220Ω -> PINO D5</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Pólo (-) -></span> <span class="text-slate-400 font-bold">GND (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Sinal -></span> <span class="text-emerald-400 font-bold">Modulação PWM</span></li>
+                    </ul>
+                </div>
+
+                <!-- Conexão 3 -->
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-yellow-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>🔊 BUZZER ATIVO 5V</span>
+                        <span>PINO D6</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Pino (+) -></span> <span class="text-yellow-400 font-bold">PINO D6</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Pino (-) -></span> <span class="text-slate-400 font-bold">GND (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Disparo -></span> <span class="text-slate-300">Bipe Frequencial</span></li>
+                    </ul>
+                </div>
+
+                <!-- Conexão 4 -->
+                <div class="bg-cyber-card p-5 rounded-lg border border-slate-800 space-y-3">
+                    <div class="text-red-400 font-bold text-sm flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span>🔋 ALIMENTAÇÃO AUTÔNOMA</span>
+                        <span>9V BATERIA</span>
+                    </div>
+                    <ul class="space-y-2 text-slate-300">
+                        <li class="flex justify-between"><span class="text-slate-500">Bateria (+) -></span> <span class="text-red-400 font-bold">Chave Liga/Desliga</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Chave Out -></span> <span class="text-amber-400 font-bold">PINO VIN (Arduino)</span></li>
+                        <li class="flex justify-between"><span class="text-slate-500">Bateria (-) -></span> <span class="text-slate-400 font-bold">PINO GND</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Para Que Serve? -->
+    <section id="para-que-serve" class="py-20 bg-cyber-bg border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// FUNCIONALIDADE DE ROBÓTICA</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Para Que Serve o Boné Sensorial?
+                </h2>
+                <p class="text-slate-400 mt-2 text-base">
+                    Um radar vestível projetado para cobrir o "ângulo cego" da bengala tradicional.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-radar"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Detectar Obstáculos Altos</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Funciona como um <strong>"radar de cabeça"</strong>. Ele escaneia a altura do peito e do rosto da pessoa, identificando orelhões, galhos de árvores, placas de trânsito e portões abertos.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-wave-square"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Calcular Distância em Tempo Real</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            O sensor emite ondas de som (como um morcego ou um sonar de navio). O som bate no objeto, volta para o boné e o Arduino calcula a quantos centímetros o obstáculo está.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-cyber-card rounded-xl p-8 border border-slate-800 hover:border-cyber-accent transition flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded bg-cyber-accent/10 border border-cyber-accent text-cyber-neon flex items-center justify-center text-xl mb-6">
+                            <i class="fa-solid fa-bullseye"></i>
+                        </div>
+                        <h3 class="font-tech font-bold text-xl text-white mb-3">Avisar pelo Tato</h3>
+                        <p class="text-slate-400 text-sm leading-relaxed">
+                            Transforma a distância em vibração física na testa do usuário. Quanto mais perto o objeto estiver, mais forte ou mais rápido o boné vibra.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Como Pode Ajudar no Dia a Dia? -->
+    <section id="beneficios" class="py-20 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// BENEFÍCIOS PRÁTICOS</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Como Pode Ajudar no Dia a Dia?
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Benefício 1 -->
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-red-500/10 border border-red-500/30 text-red-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Evita Acidentes Graves</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Pancadas na cabeça e no rosto são os acidentes mais comuns e dolorosos para pessoas cegas nas ruas. O boné evita esses traumas antes do impacto.
+                    </p>
+                </div>
+
+                <!-- Benefício 2 -->
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-hands-free"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Liberdade para as Mãos</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Por ser um dispositivo vestível (<em>wearable</em>), a pessoa não precisa segurar nada. Suas mãos ficam livres para carregar sacolas, abrir portas ou usar o celular.
+                    </p>
+                </div>
+
+                <!-- Benefício 3 -->
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-person-walking-with-cane"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Trabalha em Dupla com a Bengala</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Enquanto a bengala tradicional protege as pernas e mapeia o chão (buracos e degraus), o boné protege a parte de cima do corpo. Juntos, eles criam uma proteção completa.
+                    </p>
+                </div>
+
+                <!-- Benefício 4 -->
+                <div class="bg-cyber-card p-6 rounded-xl border border-slate-800 space-y-4">
+                    <div class="w-10 h-10 bg-purple-500/10 border border-purple-500/30 text-purple-400 rounded flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-child-reaching"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-lg text-white">Ajuda a Manter a Postura</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Dá mais confiança para a pessoa caminhar com a cabeça erguida, sem o medo constante de trombar em algo.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Finalidade no Ambiente Escolar -->
+    <section id="escola" class="py-20 bg-cyber-bg border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// APLICAÇÃO NO AMBIENTE ESCOLAR</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Para Qual Finalidade na Escola?
+                </h2>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Escolar 1 -->
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-red-500/10 border border-red-500/30 text-red-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-fire-extinguisher"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Obstáculos nos Corredores</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Escolas costumam ter extintores de incêndio pendurados na parede, bebedouros salientes, armários abertos ou murais de aviso com quinas. Alunos cegos podem trombar nesses objetos antes que a bengala toque o chão. O boné resolve isso alertando sobre essas barreiras aéreas.
+                    </p>
+                </div>
+
+                <!-- Escolar 2 -->
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Ambientes Movimentados (Pátios)</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Na hora do intervalo, o pátio fica cheio de pessoas mudando de direção o tempo todo, mochilas jogadas e cadeiras fora do lugar. O boné ajuda o estudante a navegar por esse fluxo caótico sem colisões.
+                    </p>
+                </div>
+
+                <!-- Escolar 3 -->
+                <div class="bg-cyber-card p-8 rounded-xl border border-slate-800 space-y-3">
+                    <div class="w-10 h-10 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 rounded flex items-center justify-center text-lg mb-4">
+                        <i class="fa-solid fa-door-open"></i>
+                    </div>
+                    <h3 class="font-tech font-bold text-xl text-white">Portas Entreabertas</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Uma porta de sala de aula deixada pela metade é uma das maiores causas de acidentes de rosto. O sensor na aba do boné detecta a folha da porta imediatamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Lista de Materiais -->
+    <section id="materiais" class="py-20 bg-slate-950 border-b border-cyber-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid lg:grid-cols-12 gap-12 items-start">
+                
+                <div class="lg:col-span-5 space-y-6">
+                    <span class="text-xs font-mono text-cyber-neon uppercase tracking-widest">// BILL OF MATERIALS (BOM)</span>
+                    <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white">
+                        Lista Exata de Componentes
+                    </h2>
+                    <p class="text-slate-400 text-sm leading-relaxed">
+                        Todos os 12 materiais requeridos para a construção completa da bancada e protótipo.
+                    </p>
+
+                    <!-- Progresso Checklist -->
+                    <div class="bg-cyber-card p-4 rounded border border-slate-800 font-mono text-xs">
+                        <div class="flex justify-between text-slate-300 mb-2">
+                            <span>CHECKLIST_DE_COMPONENTES:</span>
+                            <span id="checklist-progress-text" class="text-cyber-neon font-bold">0 / 12</span>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded overflow-hidden border border-slate-800">
+                            <div id="checklist-progress-bar" class="bg-cyber-accent h-full w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista Interativa -->
+                <div class="lg:col-span-7 bg-cyber-card p-6 rounded-xl border border-slate-800">
+                    <ul class="space-y-3 font-mono text-xs" id="materials-list">
+                        <!-- JS Render -->
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção: Código C++ Arduino Real -->
+    <section id="codigo" class="py-20 bg-cyber-bg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-3xl mx-auto text-center mb-12">
+                <span class="text-xs font-mono text-cyber-neon tracking-widest uppercase">// FIRMWARE C++ OFICIAL</span>
+                <h2 class="font-tech text-3xl sm:text-4xl font-bold text-white mt-1">
+                    Código C++ Real Pronto para Arduino IDE
+                </h2>
+                <p class="text-slate-400 text-sm mt-2">
+                    Código de robótica profissional com filtro de média móvel, controle PWM de vibração e lógica não-bloqueante via millis().
+                </p>
+            </div>
+
+            <div class="bg-slate-950 rounded-xl border border-cyber-accent/40 overflow-hidden shadow-2xl neon-glow">
+                <div class="bg-slate-900 px-6 py-3 flex items-center justify-between border-b border-slate-800 font-mono text-xs">
+                    <span class="text-cyber-neon font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-code"></i> Bone_Sensorial_Robotica.ino
+                    </span>
+                    <button onclick="copyCode()" class="flex items-center gap-2 bg-cyber-accent hover:bg-cyan-400 text-slate-950 px-3 py-1.5 rounded font-bold transition">
+                        <i class="fa-regular fa-copy" id="copy-icon"></i>
+                        <span id="copy-text">COPIAR CÓDIGO ARDUINO</span>
+                    </button>
+                </div>
+
+                <pre class="p-6 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed"><code><span class="text-slate-500">/* =====================================================================
+ * PROJETO ROBÓTICA: BONÉ SENSORIAL DE ACESSIBILIDADE
+ * HARDWARE: Arduino Nano V3.0 (ATmega328P)
+ * SENSORES: HC-SR04 | ATUADORES: Motor Moeda 5V (PWM D5) e Buzzer (D6)
+ * ===================================================================== */</span>
+
+<span class="text-purple-400">#define</span> PIN_TRIG 2       <span class="text-slate-500">// PINO TRIGGER (SAÍDA ULTRASSÔNICA)</span>
+<span class="text-purple-400">#define</span> PIN_ECHO 3       <span class="text-slate-500">// PINO ECHO (ENTRADA ULTRASSÔNICA)</span>
+<span class="text-purple-400">#define</span> PIN_MOTOR 5      <span class="text-slate-500">// PINO PWM DO MOTOR VIBRACALL</span>
+<span class="text-purple-400">#define</span> PIN_BUZZER 6     <span class="text-slate-500">// PINO DO BUZZER ATIVO DE 5V</span>
+
+<span class="text-purple-400">const int</span> DISTANCIA_MAX = 120;  <span class="text-slate-500">// 1.20 METROS (ALERTA PREVENTIVO)</span>
+<span class="text-purple-400">const int</span> DISTANCIA_CRITICA = 30; <span class="text-slate-500">// 30 CM (PERIGO IMINENTE NA CABEÇA)</span>
+
+<span class="text-purple-400">unsigned long</span> tempoAnterior = 0;
+<span class="text-purple-400">const long</span> intervaloLeitura = 50; <span class="text-slate-500">// LEITURA A CADA 50ms</span>
+
+<span class="text-slate-500">// FILTRO DE ROBÓTICA: MÉDIA MÓVEL DE 5 LEITURAS</span>
+<span class="text-purple-400">const int</span> NUM_LEITURAS = 5;
+<span class="text-purple-400">int</span> leituras[NUM_LEITURAS];
+<span class="text-purple-400">int</span> indiceLeitura = 0;
+<span class="text-purple-400">long</span> somaLeituras = 0;
+
+<span class="text-blue-400">void</span> <span class="text-yellow-300">setup</span>() {
+  <span class="text-yellow-300">pinMode</span>(PIN_TRIG, <span class="text-cyber-neon">OUTPUT</span>);
+  <span class="text-yellow-300">pinMode</span>(PIN_ECHO, <span class="text-cyber-neon">INPUT</span>);
+  <span class="text-yellow-300">pinMode</span>(PIN_MOTOR, <span class="text-cyber-neon">OUTPUT</span>);
+  <span class="text-yellow-300">pinMode</span>(PIN_BUZZER, <span class="text-cyber-neon">OUTPUT</span>);
+
+  <span class="text-yellow-300">digitalWrite</span>(PIN_TRIG, <span class="text-cyber-neon">LOW</span>);
+  <span class="text-yellow-300">analogWrite</span>(PIN_MOTOR, 0);
+  <span class="text-yellow-300">digitalWrite</span>(PIN_BUZZER, <span class="text-cyber-neon">LOW</span>);
+
+  <span class="text-yellow-300">Serial</span>.<span class="text-yellow-300">begin</span>(9600);
+
+  <span class="text-purple-400">for</span> (<span class="text-purple-400">int</span> i = 0; i &lt; NUM_LEITURAS; i++) {
+    leituras[i] = 0;
+  }
+}
+
+<span class="text-purple-400">int</span> <span class="text-yellow-300">obterDistanciaUltrassonica</span>() {
+  <span class="text-yellow-300">digitalWrite</span>(PIN_TRIG, <span class="text-cyber-neon">LOW</span>);
+  <span class="text-yellow-300">delayMicroseconds</span>(2);
+  <span class="text-yellow-300">digitalWrite</span>(PIN_TRIG, <span class="text-cyber-neon">HIGH</span>);
+  <span class="text-yellow-300">delayMicroseconds</span>(10);
+  <span class="text-yellow-300">digitalWrite</span>(PIN_TRIG, <span class="text-cyber-neon">LOW</span>);
+
+  <span class="text-purple-400">long</span> duracao = <span class="text-yellow-300">pulseIn</span>(PIN_ECHO, <span class="text-cyber-neon">HIGH</span>, 30000);
+  <span class="text-purple-400">if</span> (duracao == 0) <span class="text-purple-400">return</span> DISTANCIA_MAX + 1;
+  <span class="text-purple-400">return</span> duracao * 0.0343 / 2;
+}
+
+<span class="text-blue-400">void</span> <span class="text-yellow-300">loop</span>() {
+  <span class="text-purple-400">unsigned long</span> tempoAtual = <span class="text-yellow-300">millis</span>();
+
+  <span class="text-purple-400">if</span> (tempoAtual - tempoAnterior &gt;= intervaloLeitura) {
+    tempoAnterior = tempoAtual;
+
+    somaLeituras -= leituras[indiceLeitura];
+    leituras[indiceLeitura] = <span class="text-yellow-300">obterDistanciaUltrassonica</span>();
+    somaLeituras += leituras[indiceLeitura];
+    indiceLeitura = (indiceLeitura + 1) % NUM_LEITURAS;
+
+    <span class="text-cyber-pulse">int</span> distanciaFiltrada = somaLeituras / NUM_LEITURAS;
+
+    <span class="text-yellow-300">Serial</span>.<span class="text-yellow-300">print</span>(<span class="text-emerald-300">"Distancia Real: "</span>);
+    <span class="text-yellow-300">Serial</span>.<span class="text-yellow-300">print</span>(distanciaFiltrada);
+    <span class="text-yellow-300">Serial</span>.<span class="text-yellow-300">println</span>(<span class="text-emerald-300">" cm"</span>);
+
+    <span class="text-purple-400">if</span> (distanciaFiltrada &lt;= DISTANCIA_MAX &amp;&amp; distanciaFiltrada &gt; 0) {
+      <span class="text-cyber-pulse">int</span> intensidadeVibracao = <span class="text-yellow-300">map</span>(distanciaFiltrada, DISTANCIA_MAX, DISTANCIA_CRITICA, 90, 255);
+      intensidadeVibracao = <span class="text-yellow-300">constrain</span>(intensidadeVibracao, 90, 255);
+
+      <span class="text-yellow-300">analogWrite</span>(PIN_MOTOR, intensidadeVibracao);
+
+      <span class="text-purple-400">if</span> (distanciaFiltrada &lt;= DISTANCIA_CRITICA) {
+        <span class="text-yellow-300">digitalWrite</span>(PIN_BUZZER, <span class="text-cyber-neon">HIGH</span>);
+      } <span class="text-purple-400">else</span> {
+        <span class="text-yellow-300">digitalWrite</span>(PIN_BUZZER, (tempoAtual / 150) % 2);
+      }
+    } <span class="text-purple-400">else</span> {
+      <span class="text-yellow-300">analogWrite</span>(PIN_MOTOR, 0);
+      <span class="text-yellow-300">digitalWrite</span>(PIN_BUZZER, <span class="text-cyber-neon">LOW</span>);
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Rodapé -->
+    <footer class="bg-slate-950 text-slate-500 border-t border-cyber-border py-8 font-mono text-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2 text-slate-300">
+                <i class="fa-solid fa-robot text-cyber-neon"></i>
+                <span>ROBOTICS & ACCESSIBILITY PROJECT // 2026</span>
+            </div>
+            <p>Placa: Arduino Nano (ATmega328P) | Sensor: HC-SR04</p>
+        </div>
+    </footer>
+
+    <!-- ================================================================= -->
+    <!-- 3. BLOCO DE LÓGICA JAVASCRIPT                                     -->
+    <!-- ================================================================= -->
+    <script>
+        const materialsData = [
+            { id: 1, name: "01 Sensor Ultrassônico HC-SR04", desc: "Para medir a distância dos obstáculos", tag: "Sensor" },
+            { id: 2, name: "01 Placa Arduino Nano com pinos", desc: "Por ser pequena e leve para o boné", tag: "MCU" },
+            { id: 3, name: "01 Cabo USB compatível com Arduino Nano", desc: "Para carregar o código real", tag: "Cabo" },
+            { id: 4, name: "01 Mini Motor de Vibração Moeda de 5V", desc: "Para vibrar na testa da pessoa", tag: "Atuador" },
+            { id: 5, name: "01 Buzzer Ativo de 5V", desc: "Opcional, para dar avisos em bipe sonoro", tag: "Audio" },
+            { id: 6, name: "01 Mini Protoboard de 170 pontos", desc: "Para encaixar os componentes na aba", tag: "Placa" },
+            { id: 7, name: "10 Cabos Jumpers Macho-Fêmea", desc: "Para fazer as conexões dos fios", tag: "Fios" },
+            { id: 8, name: "01 Resistor de 220 Ohms", desc: "Para proteger o motor de vibração", tag: "Passivo" },
+            { id: 9, name: "01 Bateria de 9V Alcalina", desc: "Para o boné funcionar sem fios", tag: "Power" },
+            { id: 10, name: "01 Clipe para Bateria 9V com fios soltos", desc: "Conexão de alimentação", tag: "Plug" },
+            { id: 11, name: "01 Mini Chave Interruptor Liga/Desliga", desc: "Para economizar a bateria", tag: "Chave" },
+            { id: 12, name: "01 Boné comum com aba firme", desc: "Suporte físico wearable", tag: "Estrutura" }
+        ];
+
+        let checkedState = {};
+
+        function renderMaterials() {
+            const container = document.getElementById('materials-list');
+            container.innerHTML = '';
+            
+            materialsData.forEach(item => {
+                const isChecked = !!checkedState[item.id];
+                const li = document.createElement('li');
+                li.className = `p-3 rounded border transition flex items-center gap-3 cursor-pointer select-none ${
+                    isChecked ? 'bg-slate-900 border-emerald-500 text-emerald-400' : 'bg-slate-950 border-slate-800 hover:border-cyber-accent text-slate-300'
+                }`;
+                li.onclick = () => toggleCheck(item.id);
+                
+                li.innerHTML = `
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} class="w-4 h-4 accent-cyber-accent">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold ${isChecked ? 'line-through' : ''}">${item.name}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-cyber-neon border border-slate-700">${item.tag}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">${item.desc}</p>
+                    </div>
+                `;
+                container.appendChild(li);
+            });
+
+            updateProgress();
+        }
+
+        function toggleCheck(id) {
+            checkedState[id] = !checkedState[id];
+            renderMaterials();
+        }
+
+        function updateProgress() {
+            const count = Object.values(checkedState).filter(Boolean).length;
+            const total = materialsData.length;
+            const percent = (count / total) * 100;
+
+            document.getElementById('checklist-progress-text').innerText = `${count} / ${total}`;
+            document.getElementById('checklist-progress-bar').style.width = `${percent}%`;
+        }
+
+        function updateDemo(val) {
+            const sliderRead = document.getElementById('slider-val-read');
+            const displayDist = document.getElementById('display-dist');
+            const pulse = document.getElementById('radar-pulse');
+            
+            const logPwm = document.getElementById('log-pwm');
+            const logBuzzer = document.getElementById('log-buzzer');
+            const logStatus = document.getElementById('log-status');
+
+            sliderRead.innerText = `${val} cm`;
+            displayDist.innerText = `${val} cm`;
+
+            if (val <= 30) {
+                const pwmVal = Math.round(90 + ((120 - val) / 90) * (255 - 90));
+                logPwm.innerText = `> PWM Motor (D5): ${pwmVal} / 255 (MÁXIMO VIBRANDO)`;
+                logBuzzer.innerText = `> Estado Buzzer (D6): LIGADO (BIPE CONTÍNUO)`;
+                logStatus.innerText = `> STATUS: 🚨 COLISÃO IMINENTE NA TESTA!`;
+                logStatus.className = `text-red-400 font-bold animate-pulse`;
+                pulse.style.animationDuration = '0.2s';
+            } else if (val <= 120) {
+                const pwmVal = Math.round(90 + ((120 - val) / 90) * (255 - 90));
+                logPwm.innerText = `> PWM Motor (D5): ${pwmVal} / 255 (INTERMITENTE)`;
+                logBuzzer.innerText = `> Estado Buzzer (D6): LIGADO (BIPE PULSADO)`;
+                logStatus.innerText = `> STATUS: ⚠️ OBSTÁCULO AÉREO DETECTADO`;
+                logStatus.className = `text-amber-400 font-bold`;
+                pulse.style.animationDuration = '0.7s';
+            } else {
+                logPwm.innerText = `> PWM Motor (D5): 0 / 255 (OFF)`;
+                logBuzzer.innerText = `> Estado Buzzer (D6): DESLIGADO`;
+                logStatus.innerText = `> STATUS: ✅ CAMINHO LIVRE`;
+                logStatus.className = `text-emerald-400 font-bold`;
+                pulse.style.animationDuration = '2s';
+            }
+        }
+
+        function changeFontSize(size) {
+            document.body.classList.remove('font-lg', 'font-xl');
+            if (size === 'lg') document.body.classList.add('font-lg');
+            if (size === 'xl') document.body.classList.add('font-xl');
+        }
+
+        function toggleHighContrast() {
+            document.body.classList.toggle('high-contrast');
+        }
+
+        let isSpeaking = false;
+        function toggleTTS() {
+            const btnText = document.getElementById('tts-text');
+            if ('speechSynthesis' in window) {
+                if (isSpeaking) {
+                    window.speechSynthesis.cancel();
+                    isSpeaking = false;
+                    btnText.innerText = "VOICE_GUIDE";
+                } else {
+                    const text = "Boné Sensorial Robótico com Arduino Nano. Projeto de engenharia assistiva para detecção de obstáculos na cabeça.";
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'pt-BR';
+                    utterance.onend = () => {
+                        isSpeaking = false;
+                        btnText.innerText = "VOICE_GUIDE";
+                    };
+                    window.speechSynthesis.speak(utterance);
+                    isSpeaking = true;
+                    btnText.innerText = "STOP_VOICE";
+                }
+            }
+        }
+
+        function copyCode() {
+            const code = `/* =====================================================================
+ * PROJETO ROBÓTICA: BONÉ SENSORIAL DE ACESSIBILIDADE
+ * HARDWARE: Arduino Nano V3.0 (ATmega328P)
+ * SENSORES: HC-SR04 | ATUADORES: Motor Moeda 5V (PWM D5) e Buzzer (D6)
+ * ===================================================================== */
+
+#define PIN_TRIG 2       // PINO TRIGGER
+#define PIN_ECHO 3       // PINO ECHO
+#define PIN_MOTOR 5      // PINO PWM MOTOR VIBRACALL
+#define PIN_BUZZER 6     // PINO BUZZER
+
+const int DISTANCIA_MAX = 120;  
+const int DISTANCIA_CRITICA = 30; 
+
+unsigned long tempoAnterior = 0;
+const long intervaloLeitura = 50; 
+
+const int NUM_LEITURAS = 5;
+int leituras[NUM_LEITURAS];
+int indiceLeitura = 0;
+long somaLeituras = 0;
+
+void setup() {
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  pinMode(PIN_MOTOR, OUTPUT);
+  pinMode(PIN_BUZZER, OUTPUT);
+
+  digitalWrite(PIN_TRIG, LOW);
+  analogWrite(PIN_MOTOR, 0);
+  digitalWrite(PIN_BUZZER, LOW);
+
+  Serial.begin(9600);
+
+  for (int i = 0; i < NUM_LEITURAS; i++) {
+    leituras[i] = 0;
+  }
+}
+
+int obterDistanciaUltrassonica() {
+  digitalWrite(PIN_TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(PIN_TRIG, LOW);
+
+  long duracao = pulseIn(PIN_ECHO, HIGH, 30000);
+  if (duracao == 0) return DISTANCIA_MAX + 1;
+  return duracao * 0.0343 / 2;
+}
+
+void loop() {
+  unsigned long tempoAtual = millis();
+
+  if (tempoAtual - tempoAnterior >= intervaloLeitura) {
+    tempoAnterior = tempoAtual;
+
+    somaLeituras -= leituras[indiceLeitura];
+    leituras[indiceLeitura] = obterDistanciaUltrassonica();
+    somaLeituras += leituras[indiceLeitura];
+    indiceLeitura = (indiceLeitura + 1) % NUM_LEITURAS;
+
+    int distanciaFiltrada = somaLeituras / NUM_LEITURAS;
+
+    Serial.print("Distancia Real: ");
+    Serial.print(distanciaFiltrada);
+    Serial.println(" cm");
+
+    if (distanciaFiltrada <= DISTANCIA_MAX && distanciaFiltrada > 0) {
+      int intensidadeVibracao = map(distanciaFiltrada, DISTANCIA_MAX, DISTANCIA_CRITICA, 90, 255);
+      intensidadeVibracao = constrain(intensidadeVibracao, 90, 255);
+
+      analogWrite(PIN_MOTOR, intensidadeVibracao);
+
+      if (distanciaFiltrada <= DISTANCIA_CRITICA) {
+        digitalWrite(PIN_BUZZER, HIGH);
+      } else {
+        digitalWrite(PIN_BUZZER, (tempoAtual / 150) % 2);
+      }
+    } else {
+      analogWrite(PIN_MOTOR, 0);
+      digitalWrite(PIN_BUZZER, LOW);
+    }
+  }
+}`;
+            
+            const area = document.createElement('textarea');
+            area.value = code;
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand('copy');
+            document.body.removeChild(area);
+
+            const copyText = document.getElementById('copy-text');
+            copyText.innerText = "COPIADO COM SUCESSO!";
+            setTimeout(() => { copyText.innerText = "COPIAR CÓDIGO ARDUINO"; }, 2000);
+        }
+
+        window.onload = function() {
+            renderMaterials();
+            updateDemo(150);
+        };
+    </script>
+</body>
+</html>
